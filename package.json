@@ -1,0 +1,15 @@
+{
+  "name": "internal-solutions-library",
+  "version": "1.0.0",
+  "description": "Libreria interna de soluciones reutilizables",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "server:mysql": "node src/server-with-mysql.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "mysql2": "^3.24.6"
+  }
+}
