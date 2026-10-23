@@ -1,11 +1,13 @@
 import express from 'express';
 import { ReusableSolutionsController } from '../controllers/reusable-solutions.controller.js';
 import { catchError } from '../utils/catch-error.js';
+import { TagsService } from '../services/tags.service.js';
 
-export const resusableSolutionsRoutes = (reusableSolutionsModel) => {
+export const resusableSolutionsRoutes = (reusableSolutionsModel, tagsModel) => {
     const router = express.Router();
 
-    const reusableSolutionsController = new ReusableSolutionsController(reusableSolutionsModel);
+    const tagsService                 = new TagsService(tagsModel);
+    const reusableSolutionsController = new ReusableSolutionsController(reusableSolutionsModel, tagsService);
 
     router.get('/', catchError(reusableSolutionsController.getAllReusableSolutions));
     router.get('/:id', catchError(reusableSolutionsController.getReusableSolutionById));
