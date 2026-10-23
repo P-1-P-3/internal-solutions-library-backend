@@ -1,7 +1,8 @@
 export default class ReusableSolutionsService {
-    constructor(reusableSolutionsModel, tagsService) {
+    constructor(reusableSolutionsModel, tagsService, technologiesService) {
         this.reusableSolutionsModel = reusableSolutionsModel;
         this.tagsService            = tagsService;
+        this.technologiesService    = technologiesService;
     };
 
     async getAllReusableSolutions() {
@@ -13,14 +14,17 @@ export default class ReusableSolutionsService {
             let solution = solutionsById.get(row.id);
 
             if (!solution) {
-                const { tag_id, tag_name,...solutionData } = row;
+                const { tag_id, tag_name, technology_id, technology_name, ...solutionData } = row;
 
-                solution = { ...solutionData, tags: [] };
+                solution = { ...solutionData, tags: [], technologies: [] };
                 solutionsById.set(row.id, solution);
             }
-
-            if (row.tag_id !== null)
+            
+            if (row.tag_id !== null && !solution.tags.some((item) => item.id === row.tag_id))
                 solution.tags.push({ id: row.tag_id, tag: row.tag_name });
+
+            if (row.technology_id !== null && !solution.technologies.some((item) => item.id === row.technology_id))
+                solution.technologies.push({ id: row.technology_id, tag: row.technology_name });
         }
 
         return [...solutionsById.values()];
@@ -31,41 +35,51 @@ export default class ReusableSolutionsService {
 
         if (!reusableSolution) return null;
 
-        const tags = await this.tagsService.getTagsByIdSolution(id);
-        return {...reusableSolution, tags};
+        const tags        = await this.tagsService.getTagsByIdSolution(id);
+        const tecnologies = await this.technologiesService.getTechnologiesByIdSolution(id);
+
+        return {...reusableSolution, tags, tecnologies};
     };
 
     async createReusableSolution({tags, technologies, ...solutionData}) {
         const newSolution = await this.reusableSolutionsModel.createReusableSolution(solutionData);
 
-        if (newSolution?.id && tags.length > 0) {
-            await this.tagsService.associateTagsWithSolution(newSolution.id, tags);
+        if (newSolution?.id) {
+            if (tags.length > 0)
+                await this.tagsService.associateTagsWithSolution(newSolution.id, tags);
+
+            if (technologies.length > 0)
+                await this.technologiesService.associateTechnologiesWithSolution(newSolution.id, technologies);
         }
-        // TODO: Crear lógica para asociar technologies con la nueva solución reutilizable
 
         return {...newSolution, tags, technologies};
     };
 
     async updateReusableSolution(id, {tags, technologies, ...solutionData}) {
         const updatedSolution = await this.reusableSolutionsModel.updateReusableSolution(id, solutionData);
-        const tagResults = { new: null, remove: null };
+        const tagResults        = { new: null, remove: null };
+        const technologyResults = { new: null, remove: null };
 
-        if (tags?.new?.length > 0) {
+        if (tags?.new?.length > 0)
             tagResults.new = await this.tagsService.associateTagsWithSolution(id, tags.new);
-        }
 
-        if (tags?.remove?.length > 0) {
+        if (tags?.remove?.length > 0)
             tagResults.remove = await this.tagsService.removeTagsFromSolution(id, tags.remove);
-        }
-        // TODO: Crear lógica para actualizar tags y technologies asociados con la solución reutilizable
-        return {solution: updatedSolution, tags: tagResults};
+
+        if (technologies?.new?.length > 0)
+            technologyResults.new = await this.technologiesService.associateTechnologiesWithSolution(id, technologies.new);
+
+        if (technologies?.remove?.length > 0)
+            technologyResults.remove = await this.technologiesService.removeTechnologiesFromSolution(id, technologies.remove);
+        
+        return {solution: updatedSolution, tags: tagResults, technologies: technologyResults};
     };
 
     async deleteReusableSolution(id) {
         const removeAllTags   = await this.tagsService.removeAllTagsFromSolution(id);
+        const removeAllTech   = await this.technologiesService.removeAllTechnologiesFromSolution(id);
         const deletedSolution = await this.reusableSolutionsModel.deleteReusableSolution(id);
-        // TODO: Crear lógica para eliminar technologies asociados con la solución reutilizable
 
-        return {solution: deletedSolution, tags: removeAllTags};
+        return {solution: deletedSolution, tags: removeAllTags, technologies: removeAllTech};
     };
 }; 

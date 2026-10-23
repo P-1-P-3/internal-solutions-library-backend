@@ -2,8 +2,8 @@ import ReusableSolutionsService from '../services/reusable-solutions.service.js'
 import { CustomError } from '../utils/errors.js';
 import { resSuccess } from '../utils/res-success.js';
 export class ReusableSolutionsController {
-    constructor(reusableSolutionsModel, tagsService) {
-        this.reusableSolutionsService = new ReusableSolutionsService(reusableSolutionsModel, tagsService);
+    constructor(reusableSolutionsModel, tagsService, technologiesService) {
+        this.reusableSolutionsService = new ReusableSolutionsService(reusableSolutionsModel, tagsService, technologiesService);
     };
 
     getAllReusableSolutions = async (req, res) => {
