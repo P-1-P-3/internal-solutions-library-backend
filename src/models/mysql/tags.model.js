@@ -128,4 +128,24 @@ export class TagsModel {
         }
     };
 
+    static async removeAllTagsFromSolution(idSolution) {
+        try {
+            const [result] = await connection.query('DELETE FROM solution_tags WHERE id_solution = UUID_TO_BIN(?)', [idSolution]);
+            return result;
+        } catch (error) {
+            console.error('Error al eliminar todas las etiquetas asociadas a una solución:', error);
+            throw new Error('Error interno del servidor');
+        }
+    };
+
+    static async removeTagFromAllSolutions(idTag) {
+        try {
+            const [result] = await connection.query('DELETE FROM solution_tags WHERE id_tag = ?', [idTag]);
+            return result;
+        } catch (error) {
+            console.error('Error al eliminar etiqueta asociada en todas las soluciónes:', error);
+            throw new Error('Error interno del servidor');
+        }
+    };
+
 };

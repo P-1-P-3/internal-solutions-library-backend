@@ -13,10 +13,14 @@ export class ReusableSolutionsModel {
                     s.functional_area,
                     s.repository_url,
                     t.id AS tag_id,
-                    t.tag AS tag_name
+                    t.tag AS tag_name,
+                    tech.id AS technology_id,
+                    tech.technology AS technology_name
                 FROM solutions AS s
                 LEFT JOIN solution_tags AS st ON st.id_solution = s.id
                 LEFT JOIN tags AS t ON t.id = st.id_tag
+                LEFT JOIN solution_technologies AS sol_tech ON sol_tech.id_solution = s.id
+                LEFT JOIN technologies AS tech ON tech.id = sol_tech.id_technology
                 ORDER BY s.title, t.tag
             `);
             return rows;

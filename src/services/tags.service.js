@@ -38,6 +38,7 @@ export class TagsService {
             throw new CustomError(400, 'No existe la etiqueta');
         }
 
+        await this.tagsModel.removeTagFromAllSolutions(id);
         const deletedTag = await this.tagsModel.deleteTag(id);
         return deletedTag;
     };
