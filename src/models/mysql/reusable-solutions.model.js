@@ -4,7 +4,21 @@ import { randomUUID } from "node:crypto";
 export class ReusableSolutionsModel {
     static async getAllReusableSolutions() {
         try {
-            const [rows] = await connection.query('SELECT *, BIN_TO_UUID(id) as id FROM solutions');
+            const [rows] = await connection.query(`
+                SELECT
+                    BIN_TO_UUID(s.id) AS id,
+                    s.title,
+                    s.description,
+                    s.category,
+                    s.functional_area,
+                    s.repository_url,
+                    t.id AS tag_id,
+                    t.tag AS tag_name
+                FROM solutions AS s
+                LEFT JOIN solution_tags AS st ON st.id_solution = s.id
+                LEFT JOIN tags AS t ON t.id = st.id_tag
+                ORDER BY s.title, t.tag
+            `);
             return rows;
         } catch (error) {
             console.error('Error fetching reusable solutions from database:', error);
