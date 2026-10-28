@@ -4,6 +4,7 @@ import { resusableSolutionsRoutes } from './routes/reusable-solutions.routes.js'
 import { tagsRoutes } from './routes/tags.routes.js';
 import { resError } from './middlewares/resError.js';
 import { technologiesRoutes } from './routes/technologies.routes.js';
+import { corsMiddleware } from './middlewares/cors.js';
 
 export const app = (reusableSolutionsModel, tagsModel, technologiesModel) => {
     const app = express();
@@ -13,7 +14,9 @@ export const app = (reusableSolutionsModel, tagsModel, technologiesModel) => {
 
     app.disable('x-powered-by');
 
+    app.use(corsMiddleware);
     app.use(express.json());
+
     app.use('/api/reusable-solutions', resusableSolutionsRoutes(reusableSolutionsModel, tagsModel, technologiesModel));
     app.use('/api/tags', tagsRoutes(tagsModel));
     app.use('/api/technologies', technologiesRoutes(technologiesModel));
