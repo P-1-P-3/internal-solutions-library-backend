@@ -1,4 +1,4 @@
-//Receive HTTP data
+//Recive http
 import { CategoriesService } from "../services/categories.service.js";
 import { resSuccess } from "../utils/res-success.js";
 
@@ -13,25 +13,25 @@ export class CategoriesController {
     }
 
     findCategoryMatches = async (req, res) => {
-        const { category_name, check } = req.query;
+        const { category_type, check } = req.query;
         const exactMatch = ['true', 'on', '1'].includes(String(check).toLowerCase());
 
-        const categories = await this.categoriesService.findCategoryMatches(category_name, exactMatch);
+        const categories = await this.categoriesService.findCategoryMatches(category_type, exactMatch);
         resSuccess(res, categories);
     }
 
     createCategory = async (req, res) => {
-        const { category_name } = req.body;
+        const { category_type } = req.body;
 
-        const newCategory = await this.categoriesService.createCategory(category_name);
+        const newCategory = await this.categoriesService.createCategory(category_type);
         resSuccess(res, newCategory, 201);
     }
 
     updateCategory = async (req, res) => {
         const { id } = req.params;
-        const { category_name } = req.body;
+        const { category_type } = req.body;
         
-        const updatedCategory = await this.categoriesService.updateCategory(id, category_name);
+        const updatedCategory = await this.categoriesService.updateCategory(id, category_type);
         resSuccess(res, updatedCategory);
     }
 

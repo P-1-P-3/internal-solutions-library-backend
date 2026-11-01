@@ -10,26 +10,25 @@ export class CategoriesService {
         return categories;
     }
 
-    async findCategoryMatches(category_name, exactMatch = false) {
-        const categories = await this.categoriesModel.findCategoryMatches(category_name, exactMatch);
+    async findCategoryMatches(category_type, exactMatch = false) {
+        const categories = await this.categoriesModel.findCategoryMatches(category_type, exactMatch);
         return categories;
     }
 
-    async createCategory(category_name) {
-        if (await this.categoryNameExists(category_name)) {
+    async createCategory(category_type) {
+        if (await this.categoryTypeExists(category_type)) {
             throw new CustomError(400, 'La categoría ya existe');
         }
 
-        const newCategory = await this.categoriesModel.createCategory(category_name);
+        const newCategory = await this.categoriesModel.createCategory(category_type);
         return newCategory;
     }
 
-    async updateCategory(id, category_name) {
+    async updateCategory(id, category_type) {
         if (!await this.categoryExists(id)) {
             throw new CustomError(400, 'No existe la categoría');
         }
-
-        const updatedCategory = await this.categoriesModel.updateCategory(id, category_name);
+        const updatedCategory = await this.categoriesModel.updateCategory(id, category_type);
         return updatedCategory;
     }
 
@@ -37,15 +36,12 @@ export class CategoriesService {
         if (!await this.categoryExists(id)) {
             throw new CustomError(400, 'No existe la categoría');
         }
-
-        // Si prefieres desvincular las soluciones antes de borrar la categoría
-        await this.categoriesModel.removeCategoryFromSolutions(id);
         const deletedCategory = await this.categoriesModel.deleteCategory(id);
         return deletedCategory;
     }
 
-    async categoryNameExists(category_name) {
-        const categoryExists = await this.categoriesModel.findCategoryMatches(category_name, true);
+    async categoryTypeExists(category_type) {
+        const categoryExists = await this.categoriesModel.findCategoryMatches(category_type, true);
         return !!categoryExists.length;
     }
 
