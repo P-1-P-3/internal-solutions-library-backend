@@ -5,39 +5,26 @@ export default class ReusableSolutionsService {
         this.technologiesService    = technologiesService;
     };
 
-    async getAllReusableSolutions(pagination, filters = {}) {
-        const reusableSolutions = await this.reusableSolutionsModel.getAllReusableSolutions(pagination, filters);
+    async getAllReusableSolutions(pagination, filters = {}, sort = {}) {
+        const reusableSolutions = await this.reusableSolutionsModel.getAllReusableSolutions(pagination, filters, sort);
+        
+        const solutionsIds = reusableSolutions.map((solution) => solution.id);
 
-        const solutionsById = new Map();
+        const technologiesBySolutionId = await this.technologiesService.getTechnologiesByIdSolution(solutionsIds);
+        const tagsBySolutionId         = await this.tagsService.getTagsByIdSolution(solutionsIds);
+        
+        const resusableSolutionsFinal = reusableSolutions.map((solution) => {
+            const solutionTechnologies = technologiesBySolutionId.filter((tech) => tech.id_solution === solution.id);
+            const solutionTags         = tagsBySolutionId.filter((tag) => tag.id_solution === solution.id);
 
-        for (const row of reusableSolutions) {
-            let solution = solutionsById.get(row.id);
-
-            if (!solution) {
-                const { 
-                    tag_id,
-                    tag_name,
-                    technology_id,
-                    technology_name,
-                    ...solutionData 
-                } = row;
-
-                solution = { 
-                    ...solutionData, 
-                    tags: [], 
-                    technologies: [] ,
-                };
-                solutionsById.set(row.id, solution);
+            return {
+                ...solution,
+                technologies: solutionTechnologies,
+                tags: solutionTags,
             }
-            
-            if (row.tag_id !== null && !solution.tags.some((item) => item.id === row.tag_id))
-                solution.tags.push({ id: row.tag_id, tag: row.tag_name });
+        });
 
-            if (row.technology_id !== null && !solution.technologies.some((item) => item.id === row.technology_id))
-                solution.technologies.push({ id: row.technology_id, technology: row.technology_name });
-        }
-
-        return [...solutionsById.values()];
+        return [...resusableSolutionsFinal];
     };
 
     async getReusableSolutionById(id) {
