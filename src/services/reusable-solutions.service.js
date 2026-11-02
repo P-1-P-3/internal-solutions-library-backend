@@ -19,19 +19,13 @@ export default class ReusableSolutionsService {
                     tag_name,
                     technology_id,
                     technology_name,
-                    category_id ,
-                    category_name,
-                    functional_area_id,
-                    functional_area_name,
                     ...solutionData 
                 } = row;
 
                 solution = { 
                     ...solutionData, 
                     tags: [], 
-                    technologies: [] , 
-                    category: { id: category_id, type: category_name }, 
-                    functional_area: { id: functional_area_id, functional_area: functional_area_name }
+                    technologies: [] ,
                 };
                 solutionsById.set(row.id, solution);
             }

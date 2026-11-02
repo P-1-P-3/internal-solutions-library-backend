@@ -47,12 +47,10 @@ export class ReusableSolutionsModel {
                     s.repository_url,
                     t.id AS tag_id,
                     t.tag AS tag_name,
-                    s.category AS category_id,
-                    c.type AS category_name,
-                    s.functional_area AS functional_area_id,
-                    f.functional_area AS functional_area_name,
                     tech.id AS technology_id,
-                    tech.technology AS technology_name
+                    tech.technology AS technology_name,
+                    JSON_OBJECT('id', s.category, 'type', c.type) AS category,
+                    JSON_OBJECT('id', s.functional_area, 'functional_area', f.functional_area ) AS functional_area
                 FROM solutions AS s
                 LEFT JOIN solution_tags AS st 
                     ON st.id_solution = s.id
