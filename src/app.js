@@ -5,8 +5,9 @@ import { tagsRoutes } from './routes/tags.routes.js';
 import { resError } from './middlewares/resError.js';
 import { technologiesRoutes } from './routes/technologies.routes.js';
 import { corsMiddleware } from './middlewares/cors.js';
+import { dashboardStatsRoutes } from './routes/dashboard-stats.routes.js';
 
-export const app = (reusableSolutionsModel, tagsModel, technologiesModel) => {
+export const app = (reusableSolutionsModel, tagsModel, technologiesModel, dashboardStatsModel) => {
     const app = express();
     const server = createServer(app);
 
@@ -20,6 +21,7 @@ export const app = (reusableSolutionsModel, tagsModel, technologiesModel) => {
     app.use('/api/reusable-solutions', resusableSolutionsRoutes(reusableSolutionsModel, tagsModel, technologiesModel));
     app.use('/api/tags', tagsRoutes(tagsModel));
     app.use('/api/technologies', technologiesRoutes(technologiesModel));
+    app.use('/api/dashboard', dashboardStatsRoutes(dashboardStatsModel));
 
     app.use(resError);
 
