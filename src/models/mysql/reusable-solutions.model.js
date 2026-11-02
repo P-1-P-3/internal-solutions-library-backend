@@ -2,27 +2,72 @@ import connection from "../../config/mysql.js";
 import { randomUUID } from "node:crypto";
 
 export class ReusableSolutionsModel {
-    static async getAllReusableSolutions() {
+    static async getAllReusableSolutions(pagination, filters = {}) {
+        const { limit, offset } = pagination;
+        const { title, categories, functionalAreas, technologies, tags } = filters;
+
+        const conditions = [];
+        const params = [];
+
+        if (title?.trim()) {
+            conditions.push("s.title LIKE ?");
+            params.push(`%${title.trim()}%`);
+        }
+
+        if (categories?.length) {
+            conditions.push(`s.category IN (${categories.map(() => "?").join(", ")})`);
+            params.push(...categories);
+        }
+
+        if (functionalAreas?.length) {
+            conditions.push(`s.functional_area IN (${functionalAreas.map(() => "?").join(", ")})`);
+            params.push(...functionalAreas);
+        }
+
+        if (technologies?.length) {
+            conditions.push(`tech.id IN (${technologies.map(() => "?").join(", ")})`);
+            params.push(...technologies);
+        }
+
+        if (tags?.length) {
+            conditions.push(`t.id IN (${tags.map(() => "?").join(", ")})`);
+            params.push(...tags);
+        }
+
+        const where = conditions.length
+        ? `WHERE ${conditions.join(" AND ")}`
+        : "";
+
         try {
             const [rows] = await connection.query(`
                 SELECT
                     BIN_TO_UUID(s.id) AS id,
                     s.title,
                     s.description,
-                    s.category,
-                    s.functional_area,
                     s.repository_url,
                     t.id AS tag_id,
                     t.tag AS tag_name,
                     tech.id AS technology_id,
-                    tech.technology AS technology_name
+                    tech.technology AS technology_name,
+                    JSON_OBJECT('id', s.category, 'type', c.type) AS category,
+                    JSON_OBJECT('id', s.functional_area, 'functional_area', f.functional_area ) AS functional_area
                 FROM solutions AS s
-                LEFT JOIN solution_tags AS st ON st.id_solution = s.id
-                LEFT JOIN tags AS t ON t.id = st.id_tag
-                LEFT JOIN solution_technologies AS sol_tech ON sol_tech.id_solution = s.id
-                LEFT JOIN technologies AS tech ON tech.id = sol_tech.id_technology
-                ORDER BY s.title, t.tag
-            `);
+                LEFT JOIN solution_tags AS st 
+                    ON st.id_solution = s.id
+                LEFT JOIN tags AS t 
+                    ON t.id = st.id_tag
+                LEFT JOIN solution_technologies AS stch 
+                    ON stch.id_solution = s.id
+                LEFT JOIN technologies AS tech 
+                    ON tech.id = stch.id_technology
+                LEFT JOIN categories AS c 
+                    ON c.id = s.category
+                LEFT JOIN functional_areas AS f 
+                    ON f.id = s.functional_area
+                ${ where }
+                ORDER BY s.title, s.id
+                LIMIT ? OFFSET ?
+            `, [...params, limit, offset]);
             return rows;
         } catch (error) {
             console.error('Error fetching reusable solutions from database:', error);
@@ -32,7 +77,27 @@ export class ReusableSolutionsModel {
 
     static async getReusableSolutionById(id) {
         try {
-            const [row] = await connection.query('SELECT *, BIN_TO_UUID(id) as id FROM solutions WHERE id = UUID_TO_BIN(?)', [id]);
+            const [row] = await connection.query(`
+                SELECT 
+                    BIN_TO_UUID(s.id) AS id,
+                    s.title,
+                    s.description,
+                    s.requirements,
+                    s.implementation_example,
+                    s.best_practices,
+                    s.common_errors,
+                    s.repository_url,
+                    s.version,
+                    s.update_date,
+                    JSON_OBJECT('id', s.category, 'type', c.type) AS category,
+                    JSON_OBJECT('id', s.functional_area, 'functional_area', f.functional_area ) AS functional_area
+                FROM solutions AS s 
+                INNER JOIN categories AS c
+                    ON c.id = s.category
+                INNER JOIN functional_areas AS f
+                    ON f.id = s.functional_area
+                WHERE s.id = UUID_TO_BIN(?)
+            `, [id]);
             return row[0] || null;
         } catch (error) {
             console.error(`Error fetching reusable solution with ID ${id}:`, error);

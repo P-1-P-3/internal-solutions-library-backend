@@ -5,8 +5,8 @@ export default class ReusableSolutionsService {
         this.technologiesService    = technologiesService;
     };
 
-    async getAllReusableSolutions() {
-        const reusableSolutions = await this.reusableSolutionsModel.getAllReusableSolutions();
+    async getAllReusableSolutions(pagination, filters = {}) {
+        const reusableSolutions = await this.reusableSolutionsModel.getAllReusableSolutions(pagination, filters);
 
         const solutionsById = new Map();
 
@@ -14,9 +14,19 @@ export default class ReusableSolutionsService {
             let solution = solutionsById.get(row.id);
 
             if (!solution) {
-                const { tag_id, tag_name, technology_id, technology_name, ...solutionData } = row;
+                const { 
+                    tag_id,
+                    tag_name,
+                    technology_id,
+                    technology_name,
+                    ...solutionData 
+                } = row;
 
-                solution = { ...solutionData, tags: [], technologies: [] };
+                solution = { 
+                    ...solutionData, 
+                    tags: [], 
+                    technologies: [] ,
+                };
                 solutionsById.set(row.id, solution);
             }
             
@@ -24,7 +34,7 @@ export default class ReusableSolutionsService {
                 solution.tags.push({ id: row.tag_id, tag: row.tag_name });
 
             if (row.technology_id !== null && !solution.technologies.some((item) => item.id === row.technology_id))
-                solution.technologies.push({ id: row.technology_id, tag: row.technology_name });
+                solution.technologies.push({ id: row.technology_id, technology: row.technology_name });
         }
 
         return [...solutionsById.values()];
@@ -35,10 +45,10 @@ export default class ReusableSolutionsService {
 
         if (!reusableSolution) return null;
 
-        const tags        = await this.tagsService.getTagsByIdSolution(id);
-        const tecnologies = await this.technologiesService.getTechnologiesByIdSolution(id);
+        const tags         = await this.tagsService.getTagsByIdSolution(id);
+        const technologies = await this.technologiesService.getTechnologiesByIdSolution(id);
 
-        return {...reusableSolution, tags, tecnologies};
+        return {...reusableSolution, tags, technologies};
     };
 
     async createReusableSolution({tags, technologies, ...solutionData}) {
