@@ -2,12 +2,14 @@ import connection from "../../config/mysql.js";
 import { randomUUID } from "node:crypto";
 
 export class ReusableSolutionsModel {
-    static async getAllReusableSolutions(pagination, filters = {}) {
+    static async getAllReusableSolutions(pagination, filters = {}, sort = {}) {
         const { limit, offset } = pagination;
         const { title, categories, functionalAreas, technologies, tags } = filters;
+        const { field, order = 'ASC' } = sort;
 
         const conditions = [];
         const params = [];
+        const validSortFields = ['title', 'category', 'functional_area', 'repository_url', 'version', 'update_date'];
 
         if (title?.trim()) {
             conditions.push("s.title LIKE ?");
@@ -38,6 +40,10 @@ export class ReusableSolutionsModel {
         ? `WHERE ${conditions.join(" AND ")}`
         : "";
 
+        const orderBy = validSortFields.includes(field)
+            ? `ORDER BY s.${field} ${order}`
+            : "ORDER BY s.title, s.id ASC";
+        
         try {
             const [rows] = await connection.query(`
                 SELECT
@@ -45,27 +51,15 @@ export class ReusableSolutionsModel {
                     s.title,
                     s.description,
                     s.repository_url,
-                    t.id AS tag_id,
-                    t.tag AS tag_name,
-                    tech.id AS technology_id,
-                    tech.technology AS technology_name,
                     JSON_OBJECT('id', s.category, 'type', c.type) AS category,
                     JSON_OBJECT('id', s.functional_area, 'functional_area', f.functional_area ) AS functional_area
                 FROM solutions AS s
-                LEFT JOIN solution_tags AS st 
-                    ON st.id_solution = s.id
-                LEFT JOIN tags AS t 
-                    ON t.id = st.id_tag
-                LEFT JOIN solution_technologies AS stch 
-                    ON stch.id_solution = s.id
-                LEFT JOIN technologies AS tech 
-                    ON tech.id = stch.id_technology
                 LEFT JOIN categories AS c 
                     ON c.id = s.category
                 LEFT JOIN functional_areas AS f 
                     ON f.id = s.functional_area
                 ${ where }
-                ORDER BY s.title, s.id
+                ${ orderBy }
                 LIMIT ? OFFSET ?
             `, [...params, limit, offset]);
             return rows;
@@ -103,7 +97,7 @@ export class ReusableSolutionsModel {
             console.error(`Error fetching reusable solution with ID ${id}:`, error);
             throw new Error('Error interno del servidor');
         }
-    }
+    };
 
     static async createReusableSolution(solutionData) {
         try {
