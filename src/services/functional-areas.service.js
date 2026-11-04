@@ -34,11 +34,17 @@ export class FunctionalAreasService {
     }
 
     async deleteFunctionalArea(id) {
+        // Verificar si el área funcional existe
         if (!await this.functionalAreaExistsById(id)) {
             throw new CustomError(400, 'No existe el área funcional');
         }
 
-        await this.functionalAreasModel.removeFunctionalAreaFromSolutions(id);
+        // Nueva validación: verificar si está asociada a alguna solución
+        if (await this.functionalAreaAssignedToSolutions(id)) {
+            throw new CustomError(400, 'No es posible eliminar el área funcional, asegúrese de que no esté asociada a alguna solución');
+        }
+
+        // Proceder a eliminar si pasa las validaciones
         const deletedFunctionalArea = await this.functionalAreasModel.deleteFunctionalArea(id);
         return deletedFunctionalArea;
     }

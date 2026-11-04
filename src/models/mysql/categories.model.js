@@ -65,4 +65,14 @@ export class CategoriesModel {
             throw new Error('Error interno del servidor');
         }
     }
+
+    static async getSolutionsByCategoryId(id) {
+        try {
+            const [rows] = await connection.query('SELECT * FROM solutions WHERE id_category = ?', [id]);
+            return rows;
+        } catch (error) {
+            console.error('Error al verificar soluciones asociadas a la categoría:', error);
+            throw new Error('Error interno del servidor');
+        }
+    }
 }

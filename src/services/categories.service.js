@@ -33,9 +33,17 @@ export class CategoriesService {
     }
 
     async deleteCategory(id) {
-        if (!await this.categoryExists(id)) {
+        // Verificar si la categoría existe
+        if (!await this.categoryExistsById(id)) {
             throw new CustomError(400, 'No existe la categoría');
         }
+
+        // Validación: verificar si está asociada a alguna solución
+        if (await this.categoryAssignedToSolutions(id)) {
+            throw new CustomError(400, 'No es posible eliminar la categoría, asegúrese de que no esté asociada a alguna solución');
+        }
+
+        // Proceder a eliminar si pasa las validaciones
         const deletedCategory = await this.categoriesModel.deleteCategory(id);
         return deletedCategory;
     }
