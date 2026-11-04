@@ -27,12 +27,22 @@ export class ReusableSolutionsModel {
         }
 
         if (technologies?.length) {
-            conditions.push(`tech.id IN (${technologies.map(() => "?").join(", ")})`);
+            conditions.push(`EXISTS (
+                SELECT 1
+                FROM solution_technologies AS st_filter
+                WHERE st_filter.id_solution = s.id
+                    AND st_filter.id_technology IN (${technologies.map(() => "?").join(", ")})
+            )`);
             params.push(...technologies);
         }
 
         if (tags?.length) {
-            conditions.push(`t.id IN (${tags.map(() => "?").join(", ")})`);
+            conditions.push(`EXISTS (
+                SELECT 1
+                FROM solution_tags AS st_filter
+                WHERE st_filter.id_solution = s.id
+                    AND st_filter.id_tag IN (${tags.map(() => "?").join(", ")})
+            )`);
             params.push(...tags);
         }
 

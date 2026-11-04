@@ -9,9 +9,13 @@ export default class ReusableSolutionsService {
         const reusableSolutions = await this.reusableSolutionsModel.getAllReusableSolutions(pagination, filters, sort);
         
         const solutionsIds = reusableSolutions.map((solution) => solution.id);
+        let technologiesBySolutionId = [];
+        let tagsBySolutionId         = [];
 
-        const technologiesBySolutionId = await this.technologiesService.getTechnologiesByIdSolution(solutionsIds);
-        const tagsBySolutionId         = await this.tagsService.getTagsByIdSolution(solutionsIds);
+        if (solutionsIds.length > 0) {
+            technologiesBySolutionId = await this.technologiesService.getTechnologiesByIdSolution(solutionsIds);
+            tagsBySolutionId         = await this.tagsService.getTagsByIdSolution(solutionsIds);
+        }
         
         const resusableSolutionsFinal = reusableSolutions.map((solution) => {
             const solutionTechnologies = technologiesBySolutionId.filter((tech) => tech.id_solution === solution.id);
