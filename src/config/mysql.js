@@ -11,3 +11,5 @@ const config = {
 const connection = await mysql.createConnection(config);
 
 export default connection;
+
+//Connection db and enviroment variables
