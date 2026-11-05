@@ -78,15 +78,18 @@ export class TechnologiesModel {
     };
     
     static async getTechnologiesByIdSolution(idSolution) {
+        const placeholders = Array.isArray(idSolution) ? idSolution.map(() => 'UUID_TO_BIN(?)').join(', ') : 'UUID_TO_BIN(?)';
+
         try {
             const [rows] = await connection.query(`
                 SELECT 
                     t.id AS id, 
-                    t.technology AS technology 
+                    t.technology AS technology,
+                    BIN_TO_UUID(st.id_solution) AS id_solution
                 FROM solution_technologies AS st
                 INNER JOIN technologies AS t ON t.id = st.id_technology
-                WHERE id_solution = UUID_TO_BIN(?)`,
-                [idSolution]);
+                WHERE id_solution IN (${placeholders})`,
+                Array.isArray(idSolution) ? idSolution.map((id) => id) : [idSolution]);
             return rows;
         } catch (error) {
             console.error('Error al recuperar tecnologías asociadas a la solucion:', error);

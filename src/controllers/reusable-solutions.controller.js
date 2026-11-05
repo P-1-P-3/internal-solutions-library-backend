@@ -7,7 +7,9 @@ export class ReusableSolutionsController {
     };
 
     getAllReusableSolutions = async (req, res) => {
-        const reusableSolutions = await this.reusableSolutionsService.getAllReusableSolutions();
+        const { pagination, filters = {}, sort = {} } = req.body ?? {};
+        
+        const reusableSolutions = await this.reusableSolutionsService.getAllReusableSolutions(pagination, filters, sort);
         resSuccess(res, reusableSolutions);
     };
 

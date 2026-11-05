@@ -78,15 +78,18 @@ export class TagsModel {
     };
     
     static async getTagsByIdSolution(idSolution) {
+        const placeholders = Array.isArray(idSolution) ? idSolution.map(() => 'UUID_TO_BIN(?)').join(', ') : 'UUID_TO_BIN(?)';
+
         try {
             const [rows] = await connection.query(`
                 SELECT 
                     t.id AS id, 
-                    t.tag AS tag 
+                    t.tag AS tag,
+                    BIN_TO_UUID(st.id_solution) AS id_solution
                 FROM solution_tags AS st
                 INNER JOIN tags AS t ON t.id = st.id_tag
-                WHERE id_solution = UUID_TO_BIN(?)`,
-                [idSolution]);
+                WHERE id_solution IN (${placeholders})`,
+                Array.isArray(idSolution) ? idSolution.map((id) => id) : [idSolution]);
             return rows;
         } catch (error) {
             console.error('Error al recuperar etiquetas asociadas a la solucion:', error);
