@@ -1,6 +1,7 @@
 //Recive http
 import { CategoriesService } from "../services/categories.service.js";
 import { resSuccess } from "../utils/res-success.js";
+import { CustomError } from "../utils/errors.js";
 
 export class CategoriesController {
     constructor(categoriesModel) {
@@ -21,17 +22,27 @@ export class CategoriesController {
     }
 
     createCategory = async (req, res) => {
-        const { category_type } = req.body;
+        // Obtenemos category_type (o type por si acaso)
+        const category_type = req.body.category_type || req.body.type;
 
-        const newCategory = await this.categoriesService.createCategory(category_type);
+        // Validación estricta de campo vacío o espacios en blanco
+        if (!category_type || typeof category_type !== 'string' || !category_type.trim()) {
+            throw new CustomError(400, 'El campo de la categoría no puede estar vacío');
+        }
+
+        const newCategory = await this.categoriesService.createCategory(category_type.trim());
         resSuccess(res, newCategory, 201);
     }
 
     updateCategory = async (req, res) => {
         const { id } = req.params;
-        const { category_type } = req.body;
+        const category_type = req.body.category_type || req.body.type;
+
+        if (!category_type || typeof category_type !== 'string' || !category_type.trim()) {
+            throw new CustomError(400, 'El campo de la categoría no puede estar vacío');
+        }
         
-        const updatedCategory = await this.categoriesService.updateCategory(id, category_type);
+        const updatedCategory = await this.categoriesService.updateCategory(id, category_type.trim());
         resSuccess(res, updatedCategory);
     }
 

@@ -1,5 +1,6 @@
 import { FunctionalAreasService } from "../services/functional-areas.service.js";
 import { resSuccess } from "../utils/res-success.js";
+import { CustomError } from "../utils/errors.js";
 
 export class FunctionalAreasController {
     constructor(functionalAreasModel) {
@@ -22,7 +23,11 @@ export class FunctionalAreasController {
     createFunctionalArea = async (req, res) => {
         const { functional_area } = req.body;
 
-        const newFunctionalArea = await this.functionalAreasService.createFunctionalArea(functional_area);
+        if (!functional_area || typeof functional_area !== 'string' || !functional_area.trim()) {
+            throw new CustomError(400, 'El campo del área funcional no puede estar vacío');
+        }
+
+        const newFunctionalArea = await this.functionalAreasService.createFunctionalArea(functional_area.trim());
         resSuccess(res, newFunctionalArea, 201);
     }
 

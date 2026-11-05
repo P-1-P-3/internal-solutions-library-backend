@@ -66,12 +66,12 @@ export class CategoriesModel {
         }
     }
 
-    static async getSolutionsByCategoryId(id) {
+    static async removeCategoryFromSolutions(idCategory) {
         try {
-            const [rows] = await connection.query('SELECT * FROM solutions WHERE id_category = ?', [id]);
-            return rows;
+            const [result] = await connection.query('UPDATE solutions SET category = NULL WHERE category = ?', [idCategory]);
+            return result;
         } catch (error) {
-            console.error('Error al verificar soluciones asociadas a la categoría:', error);
+            console.error('Error al desvincular la categoría de las soluciones:', error);
             throw new Error('Error interno del servidor');
         }
     }

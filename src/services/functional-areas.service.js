@@ -16,35 +16,59 @@ export class FunctionalAreasService {
     }
 
     async createFunctionalArea(functional_area) {
-        if (await this.functionalAreaExistsByName(functional_area)) {
+        // Verificar campos vacíos o espacios en blanco
+        if (!functional_area || typeof functional_area !== 'string' || !functional_area.trim()) {
+            throw new CustomError(400, 'El campo del área funcional no puede estar vacío');
+        }
+
+        const cleanFunctionalArea = functional_area.trim();
+
+        if (await this.functionalAreaExistsByName(cleanFunctionalArea)) {
             throw new CustomError(400, 'El área funcional ya existe');
         }
 
-        const newFunctionalArea = await this.functionalAreasModel.createFunctionalArea(functional_area);
+        const newFunctionalArea = await this.functionalAreasModel.createFunctionalArea(cleanFunctionalArea);
         return newFunctionalArea;
     }
 
     async updateFunctionalArea(id, functional_area) {
+    // Verificar campos vacíos o espacios en blanco
+        if (!functional_area || typeof functional_area !== 'string' || !functional_area.trim()) {
+            throw new CustomError(400, 'El campo del área funcional no puede estar vacío');
+        }
+
+        const cleanFunctionalArea = functional_area.trim();       
+        
+        // 1. Verificar si el ID que intentas modificar existe
         if (!await this.functionalAreaExistsById(id)) {
             throw new CustomError(400, 'No existe el área funcional');
         }
 
+        // 2. Verificar si el nombre ya lo tiene OTRO ID diferente
+        const existingMatches = await this.functionalAreasModel.findFunctionalAreaMatches(functional_area, true);
+        if (existingMatches.length > 0) {
+            // Comparar si el ID del registro encontrado es diferente al ID que se esta actulizando
+            const conflictRecord = existingMatches.find(item => item.id !== Number(id));
+            if (conflictRecord) {
+                throw new CustomError(400, 'Ya existe otra área funcional con este nombre');
+            }
+        }
+
+        // 3. Proceder a actualizar si pasa las validaciones
         const updatedFunctionalArea = await this.functionalAreasModel.updateFunctionalArea(id, functional_area);
         return updatedFunctionalArea;
     }
 
     async deleteFunctionalArea(id) {
-        // Verificar si el área funcional existe
+        // Verificar si el área funcional existe antes de borrar
         if (!await this.functionalAreaExistsById(id)) {
             throw new CustomError(400, 'No existe el área funcional');
         }
 
-        // Nueva validación: verificar si está asociada a alguna solución
-        if (await this.functionalAreaAssignedToSolutions(id)) {
-            throw new CustomError(400, 'No es posible eliminar el área funcional, asegúrese de que no esté asociada a alguna solución');
-        }
+        // 1. Desvincular de las soluciones 
+        await this.functionalAreasModel.removeFunctionalAreaFromSolutions(id);
 
-        // Proceder a eliminar si pasa las validaciones
+        // 2. Proceder a eliminar el área funcional de su tabla
         const deletedFunctionalArea = await this.functionalAreasModel.deleteFunctionalArea(id);
         return deletedFunctionalArea;
     }

@@ -68,7 +68,7 @@ export class FunctionalAreasModel {
 
     static async removeFunctionalAreaFromSolutions(idFunctionalArea) {
         try {
-            const [result] = await connection.query('UPDATE solutions SET id_functional_area = NULL WHERE id_functional_area = ?', [idFunctionalArea]);
+            const [result] = await connection.query('UPDATE solutions SET functional_area = NULL WHERE functional_area = ?', [idFunctionalArea]);
             return result;
         } catch (error) {
             console.error('Error al desvincular el área funcional de las soluciones:', error);
