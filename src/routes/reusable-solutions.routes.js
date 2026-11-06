@@ -11,7 +11,7 @@ export const resusableSolutionsRoutes = (reusableSolutionsModel, tagsModel, tech
     const technologiesService         = new TechnologiesService(technologiesModel);
     const reusableSolutionsController = new ReusableSolutionsController(reusableSolutionsModel, tagsService, technologiesService);
 
-    router.post('/', catchError(reusableSolutionsController.getAllReusableSolutions));
+    router.post('/search', catchError(reusableSolutionsController.getAllReusableSolutions));
     router.get('/:id', catchError(reusableSolutionsController.getReusableSolutionById));
     router.post('/', catchError(reusableSolutionsController.createReusableSolution));
     router.put('/:id', catchError(reusableSolutionsController.updateReusableSolution));
