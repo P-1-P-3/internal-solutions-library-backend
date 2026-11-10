@@ -5,7 +5,8 @@ import { TagsModel } from "./models/mysql/tags.model.js";
 import { TechnologiesModel } from "./models/mysql/technologies.model.js";
 import { CategoriesModel } from "./models/mysql/categories.model.js";
 import { FunctionalAreasModel } from "./models/mysql/functional-areas.model.js";
+import { UsersModel } from "./models/mysql/users.model.js";
 
-app(ReusableSolutionsModel, TagsModel, TechnologiesModel, CategoriesModel, FunctionalAreasModel, DashboardStatsModel);
+app(ReusableSolutionsModel, TagsModel, TechnologiesModel, CategoriesModel, FunctionalAreasModel, DashboardStatsModel, UsersModel);
 
 // executable
