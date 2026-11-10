@@ -4,16 +4,16 @@ import { randomUUID } from "node:crypto";
 export class ReusableSolutionsModel {
     static async getAllReusableSolutions(pagination, filters = {}, sort = {}) {
         const { limit, offset } = pagination;
-        const { title, categories, functionalAreas, technologies, tags } = filters;
+        const { search, categories, functionalAreas, technologies, tags } = filters;
         const { field, order = 'ASC' } = sort;
 
         const conditions = [];
         const params = [];
         const validSortFields = ['title', 'category', 'functional_area', 'repository_url', 'version', 'update_date'];
 
-        if (title?.trim()) {
-            conditions.push("s.title LIKE ?");
-            params.push(`%${title.trim()}%`);
+        if (search?.trim()) {
+            conditions.push("s.title LIKE ? OR s.description LIKE ?");
+            params.push(`%${search.trim()}%`, `%${search.trim()}%`);
         }
 
         if (categories?.length) {

@@ -8,8 +8,9 @@ import { functionalAreasRoutes } from './routes/functional-areas.routes.js';
 import { resError } from './middlewares/resError.js';
 import { corsMiddleware } from './middlewares/cors.js';
 import { dashboardStatsRoutes } from './routes/dashboard-stats.routes.js';
+import { usersRoutes } from './routes/users.routes.js';
 
-export const app = (reusableSolutionsModel, tagsModel, technologiesModel, categoriesModel, functionalAreasModel, dashboardStatsModel) => {
+export const app = (reusableSolutionsModel, tagsModel, technologiesModel, categoriesModel, functionalAreasModel, dashboardStatsModel, usersModel) => {
     const app = express();
     const server = createServer(app);
 
@@ -26,6 +27,7 @@ export const app = (reusableSolutionsModel, tagsModel, technologiesModel, catego
     app.use('/api/categories', categoriesRoutes(categoriesModel));
     app.use('/api/functional-areas', functionalAreasRoutes(functionalAreasModel));
     app.use('/api/dashboard', dashboardStatsRoutes(dashboardStatsModel));
+    app.use('/api/users', usersRoutes(usersModel));
 
     app.use(resError);
 
