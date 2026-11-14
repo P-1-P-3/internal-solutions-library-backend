@@ -5,4 +5,8 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-export const corsMiddleware = cors({ origin: allowedOrigins, methods: ["GET", "POST", "PUT", "DELETE"] });
+export const corsMiddleware = cors({
+    origin: process.env.CORS_ORIGINS,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+});

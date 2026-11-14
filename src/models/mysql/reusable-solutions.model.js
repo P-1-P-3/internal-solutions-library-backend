@@ -61,6 +61,7 @@ export class ReusableSolutionsModel {
                     s.title,
                     s.description,
                     s.repository_url,
+                    s.created_by,
                     JSON_OBJECT('id', s.category, 'type', c.type) AS category,
                     JSON_OBJECT('id', s.functional_area, 'functional_area', f.functional_area ) AS functional_area
                 FROM solutions AS s
@@ -93,6 +94,7 @@ export class ReusableSolutionsModel {
                     s.repository_url,
                     s.version,
                     s.update_date,
+                    s.created_by,
                     JSON_OBJECT('id', s.category, 'type', c.type) AS category,
                     JSON_OBJECT('id', s.functional_area, 'functional_area', f.functional_area ) AS functional_area
                 FROM solutions AS s 
@@ -113,7 +115,20 @@ export class ReusableSolutionsModel {
         try {
             const id = randomUUID();
             await connection.query(
-                'INSERT INTO solutions (id, title, description, requirements, implementation_example, best_practices, common_errors, category, functional_area, repository_url, version) VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                `INSERT INTO solutions (
+                    id,
+                    title,
+                    description,
+                    requirements,
+                    implementation_example,
+                    best_practices,
+                    common_errors,
+                    category,
+                    functional_area,
+                    repository_url,
+                    version,
+                    created_by
+                ) VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?))`,
                 [
                     id,
                     solutionData.title,
@@ -125,11 +140,12 @@ export class ReusableSolutionsModel {
                     solutionData.category,
                     solutionData.functional_area,
                     solutionData.repository_url,
-                    solutionData.version
+                    solutionData.version,
+                    solutionData.created_by
                 ]);
 
             const [rows] = await connection.query(
-                'SELECT *, BIN_TO_UUID(id) as id FROM solutions WHERE id = UUID_TO_BIN(?)',
+                'SELECT *, BIN_TO_UUID(id) as id, BIN_TO_UUID(created_by) as created_by FROM solutions WHERE id = UUID_TO_BIN(?)',
                 [id]
             );
 
@@ -147,7 +163,19 @@ export class ReusableSolutionsModel {
     static async updateReusableSolution(id, solutionData) {
         try {
             const [row] = await connection.query(
-                'UPDATE solutions SET title = ?, description = ?, requirements = ?, implementation_example = ?, best_practices = ?, common_errors = ?, category = ?, functional_area = ?, repository_url = ?, version = ? WHERE id = UUID_TO_BIN(?)',
+                `UPDATE solutions SET 
+                    title = ?,
+                    description = ?,
+                    requirements = ?,
+                    implementation_example = ?,
+                    best_practices = ?,
+                    common_errors = ?,
+                    category = ?,
+                    functional_area = ?,
+                    repository_url = ?,
+                    version = ?,
+                    update_by = UUID_TO_BIN(?)
+                WHERE id = UUID_TO_BIN(?)`,
                 [
                     solutionData.title,
                     solutionData.description,
@@ -159,6 +187,7 @@ export class ReusableSolutionsModel {
                     solutionData.functional_area,
                     solutionData.repository_url,
                     solutionData.version,
+                    solutionData.update_by,
                     id
                 ]);
             return row;

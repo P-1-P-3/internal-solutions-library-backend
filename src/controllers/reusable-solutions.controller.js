@@ -26,17 +26,19 @@ export class ReusableSolutionsController {
 
     createReusableSolution = async (req, res) => {
         const solutionData = req.body;
+        const { id }       = req.user;
         
-        const newSolution = await this.reusableSolutionsService.createReusableSolution(solutionData);
+        const newSolution = await this.reusableSolutionsService.createReusableSolution({...solutionData, created_by: id});
         resSuccess(res, newSolution, 201);
 
     };
 
     updateReusableSolution = async (req, res) => {
-        const { id } = req.params;
-        const solutionData = req.body;
+        const { id }         = req.params;
+        const { id: userId } = req.user;
+        const solutionData   = req.body;
         
-        const updatedSolution = await this.reusableSolutionsService.updateReusableSolution(id, solutionData);
+        const updatedSolution = await this.reusableSolutionsService.updateReusableSolution(id, {...solutionData, update_by: userId});
         resSuccess(res, updatedSolution);
     };
 
