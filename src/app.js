@@ -1,5 +1,6 @@
 import express from 'express';
 import { createServer } from 'node:http';
+import cookieParser from 'cookie-parser';
 import { resusableSolutionsRoutes } from './routes/reusable-solutions.routes.js';
 import { tagsRoutes } from './routes/tags.routes.js';
 import { technologiesRoutes } from './routes/technologies.routes.js';
@@ -9,6 +10,7 @@ import { resError } from './middlewares/resError.js';
 import { corsMiddleware } from './middlewares/cors.js';
 import { dashboardStatsRoutes } from './routes/dashboard-stats.routes.js';
 import { usersRoutes } from './routes/users.routes.js';
+import { authRoutes } from './routes/auth.routes.js';
 
 export const app = (reusableSolutionsModel, tagsModel, technologiesModel, categoriesModel, functionalAreasModel, dashboardStatsModel, usersModel) => {
     const app = express();
@@ -20,6 +22,7 @@ export const app = (reusableSolutionsModel, tagsModel, technologiesModel, catego
 
     app.use(corsMiddleware);
     app.use(express.json());
+    app.use(cookieParser());
 
     app.use('/api/reusable-solutions', resusableSolutionsRoutes(reusableSolutionsModel, tagsModel, technologiesModel));
     app.use('/api/tags', tagsRoutes(tagsModel));
@@ -28,6 +31,7 @@ export const app = (reusableSolutionsModel, tagsModel, technologiesModel, catego
     app.use('/api/functional-areas', functionalAreasRoutes(functionalAreasModel));
     app.use('/api/dashboard', dashboardStatsRoutes(dashboardStatsModel));
     app.use('/api/users', usersRoutes(usersModel));
+    app.use('/api/auth', authRoutes(usersModel));
 
     app.use(resError);
 

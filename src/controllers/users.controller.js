@@ -22,17 +22,19 @@ export class UsersController {
 
     createUser = async (req, res) => {
         const userData = req.body;
+        const { id }   = req.user;
 
-        const user = await this.usersService.createUser(userData);
+        const user = await this.usersService.createUser({...userData, created_by: id});
 
         resSuccess(res, user, 201);
     };
 
     updateUser = async (req, res) => {
-        const userData = req.body;
-        const { id }   = req.params;
+        const userData       = req.body;
+        const { id }         = req.params;
+        const { id: userId } = req.user;
 
-        const updatedUser = await this.usersService.updateUser(id, userData);
+        const updatedUser = await this.usersService.updateUser(id, {...userData, update_by: userId});
 
         resSuccess(res, updatedUser);
     };
