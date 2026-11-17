@@ -2,17 +2,16 @@ import connection from "../../config/mysql.js";
 import { randomUUID } from "node:crypto";
 
 export class ReusableSolutionsModel {
-    static async getAllReusableSolutions(pagination, filters = {}, sort = {}) {
-        const { limit, offset } = pagination;
-        const { search, categories, functionalAreas, technologies, tags } = filters;
-        const { field, order = 'ASC' } = sort;
+    static async getAllReusableSolutions({ page, pageSize, offset: requestedOffset }, filters = {}, sort = {}) {
+        const { search, categories, functionalAreas, technologies, tags } = filters ?? {};
+        const { field, order = 'ASC' } = sort ?? {};
 
         const conditions = [];
         const params = [];
         const validSortFields = ['title', 'category', 'functional_area', 'repository_url', 'version', 'update_date'];
 
         if (search?.trim()) {
-            conditions.push("s.title LIKE ? OR s.description LIKE ?");
+            conditions.push("(s.title LIKE ? OR s.description LIKE ?)");
             params.push(`%${search.trim()}%`, `%${search.trim()}%`);
         }
 
@@ -47,14 +46,33 @@ export class ReusableSolutionsModel {
         }
 
         const where = conditions.length
-        ? `WHERE ${conditions.join(" AND ")}`
-        : "";
+            ? `WHERE ${conditions.join(" AND ")}`
+            : "";
 
+        const sortOrder = String(order).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
         const orderBy = validSortFields.includes(field)
-            ? `ORDER BY s.${field} ${order}`
-            : "ORDER BY s.title, s.id ASC";
+            ? `ORDER BY s.${field} ${sortOrder}, s.id ASC`
+            : "ORDER BY s.title ASC, s.id ASC";
         
         try {
+            const [countRows] = await connection.query(`
+                SELECT COUNT(*) AS totalItems
+                FROM solutions AS s
+                ${where}
+            `, params);
+
+            const totalItems = Number(countRows[0].totalItems);
+            const totalPages = Math.ceil(totalItems / pageSize);
+            const lastPage = Math.max(totalPages, 1);
+            const currentPage = Math.min(page, lastPage);
+            const maxOffset = totalItems === 0 ? 0 : (totalPages - 1) * pageSize;
+            const offset = requestedOffset === undefined
+                ? (currentPage - 1) * pageSize
+                : Math.min(requestedOffset, maxOffset);
+            const responsePage = requestedOffset === undefined
+                ? currentPage
+                : Math.floor(offset / pageSize) + 1;
+
             const [rows] = await connection.query(`
                 SELECT
                     BIN_TO_UUID(s.id) AS id,
@@ -72,8 +90,8 @@ export class ReusableSolutionsModel {
                 ${ where }
                 ${ orderBy }
                 LIMIT ? OFFSET ?
-            `, [...params, limit, offset]);
-            return rows;
+            `, [...params, pageSize, offset]);
+            return { rows, totalItems, page: responsePage, pageSize };
         } catch (error) {
             console.error('Error fetching reusable solutions from database:', error);
             throw new Error('Error interno del servidor');

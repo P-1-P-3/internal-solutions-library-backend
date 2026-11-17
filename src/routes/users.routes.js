@@ -8,6 +8,7 @@ export const usersRoutes = (usersModel) => {
 
     const usersController = new UsersController(usersModel);
 
+    router.post('/search', auth, authorize(1), catchError(usersController.getUsers));
     router.get('/:id', auth, authorize(1), catchError(usersController.getUser));
     router.post('/', auth, authorize(1), catchError(usersController.createUser));
     router.put('/:id', auth, authorize(1), catchError(usersController.updateUser));

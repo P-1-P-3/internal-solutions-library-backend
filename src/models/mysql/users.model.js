@@ -27,6 +27,84 @@ export class UsersModel {
         }
     };
 
+    static async getUsers(pagination = {}, filters = {}, sort = {}) {
+        const { limit, offset } = pagination ?? {};
+        const { name, email, role } = filters ?? {};
+        const { field, order = 'ASC' } = sort ?? {};
+
+        const conditions = [];
+        const params = [];
+        const validSortFields = {
+            name: 'u.full_name',
+            full_name: 'u.full_name',
+            email: 'u.email',
+            role: 'r.name',
+            last_login: 'u.last_login',
+        };
+
+        if (name?.trim()) {
+            conditions.push('u.full_name LIKE ?');
+            params.push(`%${name.trim()}%`);
+        }
+
+        if (email?.trim()) {
+            conditions.push('u.email LIKE ?');
+            params.push(`%${email.trim()}%`);
+        }
+
+        if (role !== undefined && role !== null && String(role).trim()) {
+            const roleValue = String(role).trim();
+            if (/^\d+$/.test(roleValue)) {
+                conditions.push('r.id = ?');
+                params.push(Number(roleValue));
+            } else {
+                conditions.push('r.name LIKE ?');
+                params.push(`%${roleValue}%`);
+            }
+        }
+
+        const where = conditions.length
+            ? `WHERE ${conditions.join(' AND ')}`
+            : '';
+        const sortField = Object.hasOwn(validSortFields, field)
+            ? validSortFields[field]
+            : null;
+        const sortOrder = String(order).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+        const orderBy = sortField
+            ? `ORDER BY ${sortField} ${sortOrder}`
+            : 'ORDER BY u.full_name, u.id ASC';
+        const paginationClause = limit !== undefined && limit !== null
+            ? 'LIMIT ? OFFSET ?'
+            : '';
+
+        if (paginationClause) {
+            params.push(limit, offset ?? 0);
+        }
+
+        try {
+            const [rows] = await connection.query(`
+                SELECT
+                    BIN_TO_UUID(u.id) AS id,
+                    u.full_name,
+                    u.email,
+                    u.is_active,
+                    u.last_login,
+                    JSON_OBJECT('id', u.role_id, 'name', r.name) AS role
+                FROM users AS u
+                INNER JOIN roles AS r
+                    ON r.id = u.role_id
+                ${where}
+                ${orderBy}
+                ${paginationClause}
+            `, params);
+
+            return rows;
+        } catch (error) {
+            console.error('Error al obtener usuarios:', error);
+            throw new Error('Error interno del servidor');
+        }
+    };
+
     static async getUserByEmail(email) {
         try {
             const [row] = await connection.query(`
@@ -51,11 +129,15 @@ export class UsersModel {
         }
     };
 
-    static async userEmailExists(email) {
+    static async userEmailExists(email, id = null) {
         try {
+            const query = id
+                ? 'SELECT EXISTS (SELECT 1 FROM users WHERE email = ? AND id != UUID_TO_BIN(?)) AS email_exists'
+                : 'SELECT EXISTS (SELECT 1 FROM users WHERE email = ?) AS email_exists';
+            const values = id ? [email, id] : [email];
             const [row] = await connection.query(
-                'SELECT EXISTS (SELECT 1 FROM users WHERE email = ?) AS email_exists',
-                [email]
+                query,
+                values
             );
 
             return Boolean(row[0].email_exists);
@@ -84,7 +166,7 @@ export class UsersModel {
                     user.full_name,
                     user.email,
                     user.password,
-                    user.role_id,
+                    user.role,
                     user.is_active,
                     user.must_change_password,
                     user.created_by ?? null,
@@ -116,7 +198,7 @@ export class UsersModel {
             const values = [
                 userData.full_name,
                 userData.email,
-                userData.role_id,
+                userData.role,
                 userData.is_active,
                 userData.must_change_password,
                 userData.update_by ?? null,
