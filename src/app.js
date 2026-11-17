@@ -11,8 +11,9 @@ import { corsMiddleware } from './middlewares/cors.js';
 import { dashboardStatsRoutes } from './routes/dashboard-stats.routes.js';
 import { usersRoutes } from './routes/users.routes.js';
 import { authRoutes } from './routes/auth.routes.js';
+import { rolesRoutes } from './routes/roles.routes.js';
 
-export const app = (reusableSolutionsModel, tagsModel, technologiesModel, categoriesModel, functionalAreasModel, dashboardStatsModel, usersModel) => {
+export const app = (reusableSolutionsModel, tagsModel, technologiesModel, categoriesModel, functionalAreasModel, dashboardStatsModel, usersModel, rolesModel) => {
     const app = express();
     const server = createServer(app);
 
@@ -32,6 +33,7 @@ export const app = (reusableSolutionsModel, tagsModel, technologiesModel, catego
     app.use('/api/dashboard', dashboardStatsRoutes(dashboardStatsModel));
     app.use('/api/users', usersRoutes(usersModel));
     app.use('/api/auth', authRoutes(usersModel));
+    app.use('/api/roles', rolesRoutes(rolesModel));
 
     app.use(resError);
 

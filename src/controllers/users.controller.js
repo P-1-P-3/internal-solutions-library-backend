@@ -20,6 +20,13 @@ export class UsersController {
         }
     };
 
+    getUsers = async (req, res) => {
+        const { pagination = {}, filters = {}, sort = {} } = req.body ?? {};
+
+        const users = await this.usersService.getUsers(pagination, filters, sort);
+        resSuccess(res, users);
+    };
+
     createUser = async (req, res) => {
         const userData = req.body;
         const { id }   = req.user;

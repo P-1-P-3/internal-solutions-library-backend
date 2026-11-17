@@ -1,3 +1,5 @@
+import { CustomError } from '../utils/errors.js';
+
 export default class ReusableSolutionsService {
     constructor(reusableSolutionsModel, tagsService, technologiesService) {
         this.reusableSolutionsModel = reusableSolutionsModel;
@@ -5,8 +7,41 @@ export default class ReusableSolutionsService {
         this.technologiesService    = technologiesService;
     };
 
-    async getAllReusableSolutions(pagination, filters = {}, sort = {}) {
-        const reusableSolutions = await this.reusableSolutionsModel.getAllReusableSolutions(pagination, filters, sort);
+    async getAllReusableSolutions(pagination = {}, filters = {}, sort = {}) {
+        if (!pagination || typeof pagination !== 'object' || Array.isArray(pagination)) {
+            throw new CustomError(400, 'La paginación debe ser un objeto válido.');
+        }
+
+        const pageSize = Number(pagination.pageSize ?? pagination.limit ?? 10);
+        if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+            throw new CustomError(400, 'La cantidad por página debe ser un entero entre 1 y 100.');
+        }
+
+        const offset = pagination.page === undefined && pagination.offset !== undefined
+            ? Number(pagination.offset)
+            : null;
+
+        if (offset !== null && (!Number.isInteger(offset) || offset < 0)) {
+            throw new CustomError(400, 'El desplazamiento debe ser un entero no negativo.');
+        }
+
+        const page = Number(pagination.page ?? (
+            offset === null ? 1 : Math.floor(offset / pageSize) + 1
+        ));
+
+        if (!Number.isInteger(page) || page < 1) {
+            throw new CustomError(400, 'El número de página debe ser un entero positivo.');
+        }
+
+        const modelPagination = { page, pageSize };
+        if (offset !== null) modelPagination.offset = offset;
+
+        const { rows: reusableSolutions, totalItems, page: currentPage } =
+            await this.reusableSolutionsModel.getAllReusableSolutions(
+                modelPagination,
+                filters,
+                sort
+            );
         
         const solutionsIds = reusableSolutions.map((solution) => solution.id);
         let technologiesBySolutionId = [];
@@ -28,7 +63,19 @@ export default class ReusableSolutionsService {
             }
         });
 
-        return [...resusableSolutionsFinal];
+        const totalPages = Math.ceil(totalItems / pageSize);
+
+        return {
+            items: resusableSolutionsFinal,
+            pagination: {
+                page: currentPage,
+                pageSize,
+                totalItems,
+                totalPages,
+                hasPrevious: currentPage > 1,
+                hasNext: currentPage < totalPages,
+            },
+        };
     };
 
     async getReusableSolutionById(id) {

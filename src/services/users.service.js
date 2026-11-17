@@ -11,6 +11,11 @@ export class UsersService {
         return user;
     };
 
+    async getUsers(pagination = {}, filters = {}, sort = {}) {
+        const users = await this.usersModel.getUsers(pagination, filters, sort);
+        return users;
+    };
+
     async createUser(userData) {
         if (await this.userEmailExists(userData.email)) 
             throw new CustomError(400, 'La dirección de correo electrónico introducida ya está vinculada a un usuario.');
@@ -20,13 +25,13 @@ export class UsersService {
 
         const password = await hashPassword(userData.password);
 
-        const user = await this.usersModel.createUser({...userData, password, created_by: null });
+        const user = await this.usersModel.createUser({...userData, password });
 
         return user;
     };
 
     async updateUser(id, userData) {
-        if (await this.userEmailExists(userData.email))
+        if (await this.userEmailExists(userData.email, id))
             throw new CustomError(400, 'La dirección de correo electrónico introducida ya está vinculada a un usuario.');
         
         let password;
@@ -38,7 +43,7 @@ export class UsersService {
             password = await hashPassword(userData.password);
         }
 
-        const updatedUser = await this.usersModel.updateUser(id, {...userData, password, update_by: null });
+        const updatedUser = await this.usersModel.updateUser(id, {...userData, password });
 
         return { user: updatedUser };
     };
@@ -48,7 +53,7 @@ export class UsersService {
         return { user: deletedUser };
     };
 
-    async userEmailExists(email) {
-        return this.usersModel.userEmailExists(email);
+    async userEmailExists(email, id = null) {
+        return this.usersModel.userEmailExists(email, id);
     };
 };

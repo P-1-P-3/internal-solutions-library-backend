@@ -6,7 +6,8 @@ import { TechnologiesModel } from "./models/mysql/technologies.model.js";
 import { CategoriesModel } from "./models/mysql/categories.model.js";
 import { FunctionalAreasModel } from "./models/mysql/functional-areas.model.js";
 import { UsersModel } from "./models/mysql/users.model.js";
+import { RolesModel } from "./models/mysql/roles.model.js";
 
-app(ReusableSolutionsModel, TagsModel, TechnologiesModel, CategoriesModel, FunctionalAreasModel, DashboardStatsModel, UsersModel);
+app(ReusableSolutionsModel, TagsModel, TechnologiesModel, CategoriesModel, FunctionalAreasModel, DashboardStatsModel, UsersModel, RolesModel);
 
 // executable
