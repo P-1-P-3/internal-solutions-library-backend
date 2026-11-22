@@ -13,6 +13,7 @@ export const resusableSolutionsRoutes = (reusableSolutionsModel, tagsModel, tech
     const reusableSolutionsController = new ReusableSolutionsController(reusableSolutionsModel, tagsService, technologiesService);
 
     router.post('/search', auth, authorize(1, 2), catchError(reusableSolutionsController.getAllReusableSolutions));
+    router.post('/user', auth, authorize(1, 2), catchError(reusableSolutionsController.getReusableSolutionsByUser));
     router.get('/:id', auth, authorize(1, 2), catchError(reusableSolutionsController.getReusableSolutionById));
     router.post('/', auth, authorize(1, 2), catchError(reusableSolutionsController.createReusableSolution));
     router.put('/:id', auth, authorize(1, 2), catchError(reusableSolutionsController.updateReusableSolution));

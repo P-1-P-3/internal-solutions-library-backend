@@ -98,6 +98,101 @@ export class ReusableSolutionsModel {
         }
     };
 
+    static async getReusableSolutionsUser(userId, { page, pageSize, offset: requestedOffset }, filters = {}, sort = {}) {
+        const { search, categories, functionalAreas, technologies, tags } = filters ?? {};
+        const { field, order = 'ASC' } = sort ?? {};
+
+        const conditions = ["s.created_by = UUID_TO_BIN(?)"];
+        const params = [userId];
+        const validSortFields = ['title', 'category', 'functional_area', 'repository_url', 'version', 'update_date'];
+
+        if (search?.trim()) {
+            conditions.push("(s.title LIKE ? OR s.description LIKE ?)");
+            params.push(`%${search.trim()}%`, `%${search.trim()}%`);
+        }
+
+        if (categories?.length) {
+            conditions.push(`s.category IN (${categories.map(() => "?").join(", ")})`);
+            params.push(...categories);
+        }
+
+        if (functionalAreas?.length) {
+            conditions.push(`s.functional_area IN (${functionalAreas.map(() => "?").join(", ")})`);
+            params.push(...functionalAreas);
+        }
+
+        if (technologies?.length) {
+            conditions.push(`EXISTS (
+                SELECT 1
+                FROM solution_technologies AS st_filter
+                WHERE st_filter.id_solution = s.id
+                    AND st_filter.id_technology IN (${technologies.map(() => "?").join(", ")})
+            )`);
+            params.push(...technologies);
+        }
+
+        if (tags?.length) {
+            conditions.push(`EXISTS (
+                SELECT 1
+                FROM solution_tags AS st_filter
+                WHERE st_filter.id_solution = s.id
+                    AND st_filter.id_tag IN (${tags.map(() => "?").join(", ")})
+            )`);
+            params.push(...tags);
+        }
+
+        const where = conditions.length
+            ? `WHERE ${conditions.join(" AND ")}`
+            : "";
+
+        const sortOrder = String(order).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+        const orderBy = validSortFields.includes(field)
+            ? `ORDER BY s.${field} ${sortOrder}, s.id ASC`
+            : "ORDER BY s.title ASC, s.id ASC";
+        
+        try {
+            const [countRows] = await connection.query(`
+                SELECT COUNT(*) AS totalItems
+                FROM solutions AS s
+                ${where}
+            `, params);
+
+            const totalItems = Number(countRows[0].totalItems);
+            const totalPages = Math.ceil(totalItems / pageSize);
+            const lastPage = Math.max(totalPages, 1);
+            const currentPage = Math.min(page, lastPage);
+            const maxOffset = totalItems === 0 ? 0 : (totalPages - 1) * pageSize;
+            const offset = requestedOffset === undefined
+                ? (currentPage - 1) * pageSize
+                : Math.min(requestedOffset, maxOffset);
+            const responsePage = requestedOffset === undefined
+                ? currentPage
+                : Math.floor(offset / pageSize) + 1;
+
+            const [rows] = await connection.query(`
+                SELECT
+                    BIN_TO_UUID(s.id) AS id,
+                    s.title,
+                    s.description,
+                    s.repository_url,
+                    JSON_OBJECT('id', s.category, 'type', c.type) AS category,
+                    JSON_OBJECT('id', s.functional_area, 'functional_area', f.functional_area ) AS functional_area
+                FROM solutions AS s
+                LEFT JOIN categories AS c 
+                    ON c.id = s.category
+                LEFT JOIN functional_areas AS f 
+                    ON f.id = s.functional_area
+                ${ where }
+                ${ orderBy }
+                LIMIT ? OFFSET ?
+            `, [...params, pageSize, offset]);
+            return { rows, totalItems, page: responsePage, pageSize };
+        } catch (error) {
+            console.error('Error fetching reusable solutions from database:', error);
+            throw new Error('Error interno del servidor');
+        }
+    };
+
     static async getReusableSolutionById(id) {
         try {
             const [row] = await connection.query(`
@@ -112,7 +207,7 @@ export class ReusableSolutionsModel {
                     s.repository_url,
                     s.version,
                     s.update_date,
-                    s.created_by,
+                    BIN_TO_UUID(s.created_by) as created_by,
                     JSON_OBJECT('id', s.category, 'type', c.type) AS category,
                     JSON_OBJECT('id', s.functional_area, 'functional_area', f.functional_area ) AS functional_area
                 FROM solutions AS s 

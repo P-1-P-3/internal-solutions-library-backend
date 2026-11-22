@@ -224,7 +224,7 @@ export class UsersModel {
     static async updatePassword(id, password, update_by) {
         try {
             const [result] = await connection.query(
-                'UPDATE users SET must_change_password = ?, password = ?, update_by = ? WHERE id = UUID_TO_BIN(?)',
+                'UPDATE users SET must_change_password = ?, password = ?, update_by = UUID_TO_BIN(?) WHERE id = UUID_TO_BIN(?)',
                 [false, password, update_by, id]
             );
             return result;

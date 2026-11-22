@@ -13,6 +13,14 @@ export class ReusableSolutionsController {
         resSuccess(res, reusableSolutions);
     };
 
+    getReusableSolutionsByUser = async (req, res) => {
+        const { id } = req.user;
+        const { pagination, filters = {}, sort = {} } = req.body ?? {};
+        
+        const reusableSolutions = await this.reusableSolutionsService.getReusableSolutionsUser(id, pagination, filters, sort);
+        resSuccess(res, reusableSolutions);
+    };
+
     getReusableSolutionById = async (req, res) => {
         const { id } = req.params;
 
